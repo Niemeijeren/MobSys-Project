@@ -17,11 +17,12 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
+public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private static final int REQUEST_CODE_LOCATION_PERMISSION = 1;
@@ -30,15 +31,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static final int REQUEST_CODE = 101;
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         accelSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        sensorManager.registerListener(MainActivity.this, accelSensor, sensorManager.SENSOR_DELAY_NORMAL);
+        //sensorManager.registerListener(MainActivity.this, accelSensor, sensorManager.SENSOR_DELAY_NORMAL);
         this.getPermission();
-        findViewById(R.id.buttonStartLocation).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btnStart).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (ContextCompat.checkSelfPermission(
@@ -55,7 +57,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         });
 
-        findViewById(R.id.buttonStopLocation).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btnStop).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 stopLocationService();
@@ -85,15 +87,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        //Log.d(TAG, "onSensorChanged: X: " + event.values[0] + " Y: " + event.values[1] + " Z: " + event.values[2]);
-    }
+    // @Override
+    // public void onSensorChanged(SensorEvent event) {
+    //  Log.d(TAG, "onSensorChanged: X: " + event.values[0] + " Y: " + event.values[1] + " Z: " + event.values[2]);
+    // }
 
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    // @Override
+    // public void onAccuracyChanged(Sensor sensor, int accuracy) {
         //implement something
-    }
+    // }
 
     public boolean LocationServiceRunning(){
         ActivityManager activityManager =
@@ -117,7 +119,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Intent intent = new Intent(getApplicationContext(), LocationService.class);
             intent.setAction(Constants.ACTION_START_LOCATION_SERVICE);
             startService(intent);
-            Toast.makeText(this, "location service started", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Tracking Started", Toast.LENGTH_SHORT).show();
+            findViewById(R.id.btnStart).setVisibility(View.INVISIBLE);
+            findViewById(R.id.btnStop).setVisibility(View.VISIBLE);
 
         }
     }
@@ -127,8 +131,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Intent intent = new Intent(getApplicationContext(), LocationService.class);
             intent.setAction(Constants.ACTION_STOP_LOCATION_SERVICE);
             startService(intent);
-            Toast.makeText(this, "location service stopped", Toast.LENGTH_SHORT).show();
-
+            Toast.makeText(this, "Trip ended", Toast.LENGTH_SHORT).show();
+            findViewById(R.id.btnStop).setVisibility(View.INVISIBLE);
+            findViewById(R.id.btnStart).setVisibility(View.VISIBLE);
         }
     }
 
