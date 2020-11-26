@@ -2,13 +2,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.a02_exercise">
 
+    <!--
+         The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
+         Google Maps Android API v2, but you must specify either coarse or fine
+         location permissions for the "MyLocation" functionality.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <uses-feature
         android:name="android.hardware.sensor.accelerometer"
         android:required="true" />
+
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:allowBackup="true"
@@ -17,6 +24,25 @@
         android:roundIcon="@mipmap/kayak_logo_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <!--
+             The API key for Google Maps-based APIs is defined as a string resource.
+             (See the file "res/values/google_maps_api.xml").
+             Note that the API key is linked to the encryption key used to sign the APK.
+             You need a different API key for each encryption key, including the release key that is used to
+             sign the APK for publishing.
+             You can define the keys for the debug and release targets in src/debug/ and src/release/.
+        -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key" />
+
+        <activity
+            android:name=".MapsActivity"
+            android:parentActivityName=".ViewRoutesActivity"
+            android:label="@string/title_activity_maps">
+
+        </activity>
         <!-- The main activity of the application, all the other activities are children of this one -->
         <activity android:name=".MainActivity">
             <intent-filter>
@@ -24,10 +50,10 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <!-- Child activity of main activity-->
-        <activity android:name=".ViewRoutesActivity" android:parentActivityName="com.example.a02_exercise.MainActivity">
+        </activity> <!-- Child activity of main activity -->
+        <activity
+            android:name=".ViewRoutesActivity"
+            android:parentActivityName=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -35,21 +61,12 @@
             </intent-filter>
         </activity>
 
-        <!-- Child activity of View Routes Activity
-             Is activated when an element is pressed in the recycler view -->
-        <activity android:name=".MapActivity" android:parentActivityName="com.example.a02_exercise.ViewRoutesActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
 
-        
-        <service android:name=".LocationService"
+        <service
+            android:name=".LocationService"
             android:enabled="true"
             android:exported="false" />
-        
     </application>
 
 </manifest>

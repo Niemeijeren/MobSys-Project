@@ -1,5 +1,6 @@
 package com.example.a02_exercise;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
@@ -9,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ScrollView.RoutesAdapter;
+import com.example.routes.DataConverter;
 import com.example.routes.DatabaseHandler;
 import com.example.routes.Route;
 
@@ -18,6 +20,7 @@ public class ViewRoutesActivity extends AppCompatActivity implements RoutesAdapt
 
     DatabaseHandler db;
     RoutesAdapter adapter;
+    DataConverter dataConverter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +28,7 @@ public class ViewRoutesActivity extends AppCompatActivity implements RoutesAdapt
         setContentView(R.layout.recyclerview_activity);
 
         db = DatabaseHandler.getInstance(this);
+        dataConverter = new DataConverter();
 
         // data to populate the RecyclerView with
         ArrayList<Route> routes;
@@ -48,7 +52,11 @@ public class ViewRoutesActivity extends AppCompatActivity implements RoutesAdapt
     public void onItemClick(View view, int position) {
 
         Route route = adapter.getRoute(position);
-        System.out.println(route);
+        Intent myIntent = new Intent(ViewRoutesActivity.this, MapsActivity.class);
+        String RouteToLocationsJson = dataConverter.fromOptionValuesList(route.getLocationPoints());
+        myIntent.putExtra("locations", RouteToLocationsJson); //Optional parameters
+        ViewRoutesActivity.this.startActivity(myIntent);
+
     }
 
 

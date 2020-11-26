@@ -69,7 +69,7 @@ public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         viewHolder.route = routes.get(position);
-        viewHolder.itemId.setText(position + "");
+        viewHolder.itemId.setText((position + 1) + "");
         viewHolder.content.setText(viewHolder.route.timeStart() + "");
 
         viewHolder.view.setOnClickListener(new View.OnClickListener() {

@@ -1,12 +1,15 @@
 package com.example.routes;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
 
 @Entity
-public class LocationPoint {
+public class LocationPoint  {
 
     public LocationPoint(Long timeStamp, Double latitude, Double longitude) {
         this.timeStamp = timeStamp;
@@ -65,4 +68,5 @@ public class LocationPoint {
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
     }
+
 }
