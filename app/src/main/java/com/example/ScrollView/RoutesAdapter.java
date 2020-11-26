@@ -10,7 +10,9 @@ import com.example.a02_exercise.R;
 import com.example.routes.DatabaseHandler;
 import com.example.routes.Route;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder> {
 
@@ -70,7 +72,11 @@ public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         viewHolder.route = routes.get(position);
         viewHolder.itemId.setText((position + 1) + "");
-        viewHolder.content.setText(viewHolder.route.timeStart() + "");
+
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd,yyyy HH:mm");
+        Date resultDate = new Date(viewHolder.route.timeStart());
+
+        viewHolder.content.setText(sdf.format(resultDate) + "");
 
         viewHolder.view.setOnClickListener(new View.OnClickListener() {
             @Override
