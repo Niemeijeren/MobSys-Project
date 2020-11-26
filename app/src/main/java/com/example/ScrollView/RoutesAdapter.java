@@ -15,6 +15,7 @@ import java.util.ArrayList;
 public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder> {
 
     private ArrayList<Route> routes;
+    private ItemClickListener mClickListener;
 
     /**
      * Provide a reference to the type of views that you are using
@@ -31,7 +32,7 @@ public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder
             super(view);
             // Define click listener for the ViewHolder's View
             // Should st
-            view = view;
+            this.view = view;
 
             itemId = (TextView) view.findViewById(R.id.item_ID);
             content = (TextView) view.findViewById(R.id.content);
@@ -61,16 +62,36 @@ public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder
         return new ViewHolder(view);
     }
 
+
     // Replace the contents of a view (invoked by the layout manager)
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         viewHolder.route = routes.get(position);
-        viewHolder.itemId.setText(position);
+        viewHolder.itemId.setText(position + "");
         viewHolder.content.setText(viewHolder.route.timeStart() + "");
 
-        // Get element from your dataset at this position and replace the
-        // contents of the view with that element
-        //viewHolder.getTextView().setText(localDataSet[position]);
+        viewHolder.view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Go to MapActivity and show the route that has been clicked
+            }
+        });
+
+    }
+
+    // allows clicks events to be caught
+    void setClickListener(ItemClickListener itemClickListener) {
+        this.mClickListener = itemClickListener;
+    }
+
+    // convenience method for getting data at click position
+    public Route getRoute(int id) {
+        return routes.get(id);
+    }
+
+    // parent activity will implement this method to respond to click events
+    public interface ItemClickListener {
+        void onItemClick(View view, int position);
     }
 
     // Return the size of your dataset (invoked by the layout manager)
