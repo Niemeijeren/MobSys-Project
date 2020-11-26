@@ -17,13 +17,7 @@
         android:roundIcon="@mipmap/kayak_logo_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ViewRoutesActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <!-- The main activity of the application, all the other activities are children of this one -->
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -31,6 +25,26 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Child activity of main activity-->
+        <activity android:name=".ViewRoutesActivity" android:parentActivityName="com.example.a02_exercise.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Child activity of View Routes Activity
+             Is activated when an element is pressed in the recycler view -->
+        <activity android:name=".MapActivity" android:parentActivityName="com.example.a02_exercise.ViewRoutesActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         
         <service android:name=".LocationService"
             android:enabled="true"
