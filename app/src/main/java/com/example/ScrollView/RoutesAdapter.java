@@ -85,6 +85,18 @@ public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder
             }
         });
 
+        viewHolder.view.setOnLongClickListener(new View.OnLongClickListener() {
+
+            @Override
+            public boolean onLongClick(View view) {
+                if (mClickListener != null) {
+                    mClickListener.onLongPress(view, position);
+                    return true;
+                }
+                return false;
+            }
+        });
+
     }
 
     // allows clicks events to be caught
@@ -100,6 +112,7 @@ public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder
     // parent activity will implement this method to respond to click events
     public interface ItemClickListener {
         void onItemClick(View view, int position);
+        void onLongPress(View view, int position);
     }
 
     // Return the size of your dataset (invoked by the layout manager)

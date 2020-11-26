@@ -59,5 +59,16 @@ public class ViewRoutesActivity extends AppCompatActivity implements RoutesAdapt
 
     }
 
+    @Override
+    /**
+     * Should delete the route that has been long pressed
+     * but only after a confirmation popup
+     */
+    public void onLongPress(View view, int position) {
+        Route route = adapter.getRoute(position);
+        db.userDao().deleteRoute(route);
+
+    }
+
 
 }

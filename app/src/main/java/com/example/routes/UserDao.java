@@ -1,6 +1,7 @@
 package com.example.routes;
 
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
 
@@ -18,5 +19,7 @@ public interface UserDao {
     @Insert
     public void insertRoute(Route route);
 
+    @Delete
+    public void deleteRoute(Route route);
 
 }
