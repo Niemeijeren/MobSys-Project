@@ -116,15 +116,22 @@ public class LocationService extends Service {
         startForeground(Constants.LOCATION_SERVICE_ID, builder.build());
     }
 
-    private void stopLocationService(){
-        route.setTimeEnd(System.currentTimeMillis());
-        route.setLocationPoints(locationpoints);
-        //db.userDao().insertRoute(route);
-        System.out.println(route);
-        System.out.println(locationpoints);
+    private void stopLocationService() {
+        this.insertRouteToDb();
         LocationServices.getFusedLocationProviderClient(this)
                 .removeLocationUpdates(locationCallback);
         stopSelf();
+    }
+
+    private void insertRouteToDb() {
+        route.setTimeEnd(System.currentTimeMillis());
+        route.setLocationPoints(locationpoints);
+
+        System.out.println(route);
+        System.out.println(locationpoints);
+
+        db.userDao().insertRoute(route);
+
     }
 
     @Override

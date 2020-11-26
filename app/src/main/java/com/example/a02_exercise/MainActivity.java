@@ -20,6 +20,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.example.routes.DatabaseHandler;
+
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -29,12 +31,14 @@ public class MainActivity extends AppCompatActivity {
     SensorManager sensorManager;
     Sensor accelSensor;
     private static final int REQUEST_CODE = 101;
+    DatabaseHandler db;
 
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        db = DatabaseHandler.getInstance(this.getApplicationContext());
         setContentView(R.layout.activity_main);
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         accelSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -135,6 +139,9 @@ public class MainActivity extends AppCompatActivity {
             findViewById(R.id.btnStop).setVisibility(View.INVISIBLE);
             findViewById(R.id.btnStart).setVisibility(View.VISIBLE);
         }
+
+        System.out.println("Read from DB");
+        System.out.println(db.userDao().getAllRoutes());
     }
 
 

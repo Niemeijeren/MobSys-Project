@@ -12,14 +12,11 @@ public interface UserDao {
     @Query("SELECT * FROM Route")
     List<Route> getAllRoutes();
 
-    @Query("SELECT * FROM Route WHERE ID LIKE :first")
-    Route findById(String first);
-
-    @Query("SELECT * FROM LocationPoint WHERE routeForeignKey LIKE :first")
-    List<LocationPoint> getAllLocationPoints(String first);
+    //@Query("SELECT * FROM Route WHERE ID LIKE :first")
+    //Route findById(String first);
 
     @Insert
-    void insertRoute(Route route);
+    public void insertRoute(Route route);
 
 
 }

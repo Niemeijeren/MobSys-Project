@@ -7,6 +7,7 @@ import androidx.room.Embedded;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
+import androidx.room.TypeConverters;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,29 +15,34 @@ import java.util.List;
 @Entity
 public class Route {
 
-    @PrimaryKey
-    private int ID;
+    //@PrimaryKey
+    //private int ID;
 
+    @PrimaryKey
     @ColumnInfo(name ="timeStart")
     private Long timeStart;
 
     @ColumnInfo(name ="timeEnd")
     private Long timeEnd;
 
-    @Ignore
+    @TypeConverters(DataConverter.class) // add here
+    @ColumnInfo(name = "locationsPoints")
     private List<LocationPoint> locationPoints;
+
 
     public void setLocationPoints(List<LocationPoint> list) {
         this.locationPoints = list;
     }
 
-    public int ID() {
-        return ID;
-    }
+    public List<LocationPoint> getLocationPoints() { return this.locationPoints; }
 
-    public void setID(int id) {
-        this.ID = id;
-    }
+    //public int ID() {
+    //    return ID;
+    //}
+
+    //public void setID(int id) {
+    //    this.ID = id;
+    //}
 
     public Long timeStart() {
         return timeStart;

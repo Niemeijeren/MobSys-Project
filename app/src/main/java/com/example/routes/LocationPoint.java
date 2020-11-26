@@ -5,12 +5,7 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
 
-@Entity(foreignKeys = {
-        @ForeignKey(
-                entity = Route.class,
-                parentColumns = "ID",
-                childColumns = "routeForeignKey"
-        )})
+@Entity
 public class LocationPoint {
 
     public LocationPoint(Long timeStamp, Double latitude, Double longitude) {
@@ -22,9 +17,6 @@ public class LocationPoint {
 
     @PrimaryKey
     private int ID;
-
-    @ColumnInfo(name ="routeForeignKey")
-    private int routeForeignKey;
 
     /**
      * When the Point was created
@@ -45,10 +37,6 @@ public class LocationPoint {
         return ID;
     }
 
-    public int getRouteForeignKey() {
-        return routeForeignKey;
-    }
-
     public Long getTimeStamp() {
         return timeStamp;
     }
@@ -65,9 +53,6 @@ public class LocationPoint {
         this.ID = ID;
     }
 
-    public void setRouteForeignKey(int routeForeignKey) {
-        this.routeForeignKey = routeForeignKey;
-    }
 
     public void setTimeStamp(Long timeStamp) {
         this.timeStamp = timeStamp;
