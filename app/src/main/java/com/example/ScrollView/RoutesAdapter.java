@@ -41,6 +41,8 @@ public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder
         public View getTextView() {
             return view;
         }
+
+
     }
 
     /**
@@ -72,15 +74,15 @@ public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder
 
         viewHolder.view.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                //Go to MapActivity and show the route that has been clicked
+            public void onClick(View view) {
+                if (mClickListener != null) mClickListener.onItemClick(view, position);
             }
         });
 
     }
 
     // allows clicks events to be caught
-    void setClickListener(ItemClickListener itemClickListener) {
+    public void setClickListener(ItemClickListener itemClickListener) {
         this.mClickListener = itemClickListener;
     }
 

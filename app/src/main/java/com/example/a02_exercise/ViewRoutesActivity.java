@@ -37,6 +37,7 @@ public class ViewRoutesActivity extends AppCompatActivity implements RoutesAdapt
 
         recyclerView.setLayoutManager(layoutManager);
         adapter = new RoutesAdapter(routes);
+        adapter.setClickListener(this);
         recyclerView.setAdapter(adapter);
 
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(), layoutManager.getOrientation());
