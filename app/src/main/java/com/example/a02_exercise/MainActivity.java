@@ -11,18 +11,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.routes.DatabaseHandler;
-
-import java.util.List;
+import com.example.routes.LocationPoint;
+import com.example.routes.Route;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -65,6 +61,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 stopLocationService();
+            }
+        });
+
+        findViewById(R.id.btnViewRoutes).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent myIntent = new Intent(MainActivity.this, ViewRoutesActivity.class);
+                //myIntent.putExtra("key", value); //Optional parameters
+                MainActivity.this.startActivity(myIntent);
             }
         });
 
@@ -141,7 +146,25 @@ public class MainActivity extends AppCompatActivity {
         }
 
         System.out.println("Read from DB");
-        System.out.println(db.userDao().getAllRoutes());
+        if (db.userDao().getAllRoutes() != null) {
+            for (Route route : db.userDao().getAllRoutes()) {
+                System.out.println("Route start time:");
+                System.out.println(route.timeStart());
+                System.out.println("Route end time:");
+                System.out.println(route.timeEnd());
+                if (route.getLocationPoints() != null) {
+                    for (LocationPoint locationPoint : route.getLocationPoints()) {
+                        System.out.println("LocationPoint timestamp");
+                        System.out.println(locationPoint.getTimeStamp());
+                        System.out.println("Latitude");
+                        System.out.println(locationPoint.getLatitude());
+                        System.out.println("Longitude");
+                        System.out.println(locationPoint.getLongitude());
+                    }
+                }
+            }
+        }
+
     }
 
 
