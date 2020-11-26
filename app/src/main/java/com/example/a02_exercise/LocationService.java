@@ -33,6 +33,8 @@ public class LocationService extends Service {
     DatabaseHandler db;
     Route route;
     ArrayList<LocationPoint> locationpoints;
+    int i  = 0;
+    Long now;
 
     //Method for getting Last location
     private LocationCallback locationCallback = new LocationCallback() {
@@ -43,6 +45,8 @@ public class LocationService extends Service {
                 Double latitude = locationResult.getLastLocation().getLatitude();
                 Double longitude = locationResult.getLastLocation().getLongitude();
                 locationpoints.add(new LocationPoint(locationResult.getLastLocation().getTime(), latitude, longitude));
+                i++;
+                System.out.println("times: " + i + " at time: " + (System.currentTimeMillis() - now) / 1000);
                 Log.d("LOCATION_UPDATE", latitude + ", " + longitude);
             }
         }
@@ -56,6 +60,7 @@ public class LocationService extends Service {
 
 
     private void startLocationService() {
+        now = System.currentTimeMillis();
         db = DatabaseHandler.getInstance(this.getApplicationContext());
         route = new Route();
         route.setTimeStart(System.currentTimeMillis());
@@ -98,7 +103,7 @@ public class LocationService extends Service {
         }
 
         LocationRequest locationRequest = new LocationRequest();
-        locationRequest.setInterval(2000);
+        locationRequest.setInterval(0);
         locationRequest.setFastestInterval(2000);
         locationRequest.setPriority(locationRequest.PRIORITY_HIGH_ACCURACY);
 
