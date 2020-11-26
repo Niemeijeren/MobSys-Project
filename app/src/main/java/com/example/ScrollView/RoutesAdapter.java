@@ -44,7 +44,11 @@ public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder
             return view;
         }
 
+    }
 
+    public void removeItem(int position) {
+        routes.remove(position);
+        notifyItemRemoved(position);
     }
 
     /**

@@ -67,7 +67,7 @@ public class ViewRoutesActivity extends AppCompatActivity implements RoutesAdapt
     public void onLongPress(View view, int position) {
         Route route = adapter.getRoute(position);
         db.userDao().deleteRoute(route);
-
+        adapter.removeItem(position);
     }
 
 
