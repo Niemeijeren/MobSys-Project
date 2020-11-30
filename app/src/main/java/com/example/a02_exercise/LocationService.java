@@ -18,6 +18,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.room.Database;
 
+import com.example.Kalman.MedianRoute;
 import com.example.routes.DatabaseHandler;
 import com.example.routes.LocationPoint;
 import com.example.routes.Route;
@@ -35,6 +36,7 @@ public class LocationService extends Service {
     ArrayList<LocationPoint> locationpoints;
     int i  = 0;
     Long now;
+    MedianRoute medianRoute;
 
     //Method for getting Last location
     private LocationCallback locationCallback = new LocationCallback() {
@@ -44,7 +46,9 @@ public class LocationService extends Service {
             if (locationResult != null && locationResult.getLastLocation() != null) {
                 Double latitude = locationResult.getLastLocation().getLatitude();
                 Double longitude = locationResult.getLastLocation().getLongitude();
-                locationpoints.add(new LocationPoint(locationResult.getLastLocation().getTime(), latitude, longitude));
+                Long time = locationResult.getLastLocation().getTime();
+                locationpoints.add(new LocationPoint(time, latitude, longitude));
+                medianRoute.addPoint(new LocationPoint(time, latitude, longitude));
                 i++;
                 System.out.println("times: " + i + " at time: " + (System.currentTimeMillis() - now) / 1000);
                 Log.d("LOCATION_UPDATE", latitude + ", " + longitude);
@@ -65,6 +69,7 @@ public class LocationService extends Service {
         route = new Route();
         route.setTimeStart(System.currentTimeMillis());
         locationpoints = new ArrayList<LocationPoint>();
+        medianRoute = new MedianRoute();
 
         String channelId = "location_notification_channel";
         NotificationManager notificationManager =
@@ -125,10 +130,11 @@ public class LocationService extends Service {
 
     private void insertRouteToDb() {
         route.setTimeEnd(System.currentTimeMillis());
-        route.setLocationPoints(locationpoints);
+        //route.setLocationPoints(locationpoints);
+        route.setLocationPoints(medianRoute.getLocationPointsInternal());
 
         System.out.println(route);
-        System.out.println(locationpoints);
+        System.out.println(medianRoute.getLocationPointsInternal());
 
         db.userDao().insertRoute(route);
 

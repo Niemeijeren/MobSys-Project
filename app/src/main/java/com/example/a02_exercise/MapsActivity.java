@@ -1,16 +1,20 @@
 package com.example.a02_exercise;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentActivity;
 
+import android.graphics.Color;
 import android.os.Bundle;
 
 import com.example.routes.DataConverter;
 import com.example.routes.LocationPoint;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -18,10 +22,11 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private DataConverter dataConverter;
+    private final int padding = 150;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,13 +62,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             latlngs.add(new LatLng(locationPoint.getLatitude(), locationPoint.getLongitude()));
         }
 
-        PolylineOptions rectOptions = new PolylineOptions().addAll(latlngs);
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(locations.get(0).getLatitude(), locations.get(0).getLongitude())));
-        mMap.setMinZoomPreference(14);
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        for (LatLng latLng : latlngs) {
+            builder.include(latLng);
+        }
+
+        PolylineOptions rectOptions = new PolylineOptions().addAll(latlngs).color(Color.BLUE);
+        //mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(locations.get(locations.size()/2).getLatitude(), locations.get(locations.size()/2).getLongitude())));
+        //mMap.setMinZoomPreference(12);
         Polyline line = mMap.addPolyline(rectOptions);
 
-        //LatLng sydney = new LatLng(-34, 151);
-        //mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        //mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+
+        LatLngBounds bounds = builder.build();
+        final CameraUpdate cameraUpdater = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+
+        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+            @Override
+            public void onMapLoaded() {
+                /**set animated zoom camera into map*/
+                mMap.animateCamera(cameraUpdater);
+            }
+        });
+
     }
+
 }
