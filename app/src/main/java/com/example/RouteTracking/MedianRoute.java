@@ -34,6 +34,9 @@ public class MedianRoute {
         }
     }
 
+    public double getAverageSpeed() {
+        return averageSpeed;
+    }
     /**
      * median filter a whole list of locationPoints
      * @param locationPointList

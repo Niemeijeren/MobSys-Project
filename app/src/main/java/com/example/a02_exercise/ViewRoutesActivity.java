@@ -2,6 +2,7 @@ package com.example.a02_exercise;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -30,9 +31,7 @@ public class ViewRoutesActivity extends AppCompatActivity implements RoutesAdapt
         db = DatabaseHandler.getInstance(this);
         dataConverter = new DataConverter();
 
-        // data to populate the RecyclerView with
         ArrayList<Route> routes;
-
         routes = (ArrayList<Route>) db.userDao().getAllRoutes();
 
         // set up the RecyclerView
@@ -65,9 +64,11 @@ public class ViewRoutesActivity extends AppCompatActivity implements RoutesAdapt
      * but only after a confirmation popup
      */
     public void onLongPress(View view, int position) {
-        Route route = adapter.getRoute(position);
-        db.userDao().deleteRoute(route);
-        adapter.removeItem(position);
+         Route route = adapter.getRoute(position);
+
+         db.userDao().deleteRoute(route);
+
+         adapter.removeItem(position);
     }
 
 

@@ -37,13 +37,13 @@ class Utils {
      * Calculates the speed in meters per second between two points
      * @param locationPoint1 first lat and lon
      * @param locationPoint2 second lat and lon
-     * @return double km/h
+     * @return double meters per milisecond
      */
     public static double calculateMetersPerSecond(LocationPoint locationPoint1, LocationPoint locationPoint2) {
         double distance = calculateDistance(locationPoint1, locationPoint2);
         double timePassedInSeconds = locationPoint2.getTimeStamp() - locationPoint1.getTimeStamp();
 
-        return (distance / timePassedInSeconds) * 3.6;
+        return (distance / timePassedInSeconds);
 
 
     }
