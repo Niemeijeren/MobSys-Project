@@ -15,7 +15,6 @@ public class LocationPoint  {
         this.timeStamp = timeStamp;
         this.latitude = latitude;
         this.longitude = longitude;
-
     }
 
     @PrimaryKey

@@ -68,7 +68,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent myIntent = new Intent(MainActivity.this, ViewRoutesActivity.class);
-                //myIntent.putExtra("key", value); //Optional parameters
                 MainActivity.this.startActivity(myIntent);
             }
         });
@@ -144,27 +143,6 @@ public class MainActivity extends AppCompatActivity {
             findViewById(R.id.btnStop).setVisibility(View.INVISIBLE);
             findViewById(R.id.btnStart).setVisibility(View.VISIBLE);
         }
-
-        System.out.println("Read from DB");
-        if (db.userDao().getAllRoutes() != null) {
-            for (Route route : db.userDao().getAllRoutes()) {
-                System.out.println("Route start time:");
-                System.out.println(route.timeStart());
-                System.out.println("Route end time:");
-                System.out.println(route.timeEnd());
-                if (route.getLocationPoints() != null) {
-                    for (LocationPoint locationPoint : route.getLocationPoints()) {
-                        System.out.println("LocationPoint timestamp");
-                        System.out.println(locationPoint.getTimeStamp());
-                        System.out.println("Latitude");
-                        System.out.println(locationPoint.getLatitude());
-                        System.out.println("Longitude");
-                        System.out.println(locationPoint.getLongitude());
-                    }
-                }
-            }
-        }
-
     }
 
 

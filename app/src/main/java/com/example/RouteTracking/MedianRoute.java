@@ -9,22 +9,28 @@ import java.util.List;
 public class MedianRoute {
 
     private List<LocationPoint> locationPointsInternal;
+    private List<LocationPoint> medianPoints;
+
+    private double averageSpeed;
+
     private Utils utils = new Utils();
 
     public MedianRoute() {
+        this.medianPoints = new ArrayList<>();
         this.locationPointsInternal = new ArrayList<>();
+        averageSpeed = 0;
     }
 
-    public List<LocationPoint> getLocationPointsInternal() {
-        return this.locationPointsInternal;
+    public List<LocationPoint> getMedianPoints() {
+        return this.medianPoints;
     }
 
     public void addPoint(LocationPoint locationPoint) {
         locationPointsInternal.add(locationPoint);
         if (locationPointsInternal.size() <= 5) {
-
+            //Do nothing
         } else {
-            this.medianSinglePoint(locationPointsInternal, locationPointsInternal.size() - 5);
+            medianPoints.add(this.medianSinglePoint(locationPointsInternal, locationPointsInternal.size() - 5));
         }
     }
 
@@ -61,6 +67,20 @@ public class MedianRoute {
         for (Long timeStamp: times) {
             timeAvg += timeStamp;
         }
+
+        //Speed
+        LocationPoint first = locationPointList.get(i);
+        double accumulatedSpeed = 0;
+        for (int j = i + 1;j < i + 5; j++) {
+            accumulatedSpeed += utils.calculateMetersPerSecond(first, locationPointList.get(j));
+        }
+        accumulatedSpeed = accumulatedSpeed / 4;
+        if (this.averageSpeed != 0) {
+            this.averageSpeed = (averageSpeed + accumulatedSpeed) / 2;
+        } else {
+            averageSpeed = accumulatedSpeed;
+        }
+
         return new LocationPoint(timeAvg / times.size(), lats.get(lats.size() / 2), lons.get(lons.size() / 2));
     }
 

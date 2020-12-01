@@ -8,6 +8,10 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
@@ -28,13 +32,16 @@ import com.google.android.gms.location.LocationServices;
 
 import java.util.ArrayList;
 
-public class LocationService extends Service {
+public class LocationService extends Service implements SensorEventListener {
 
     DatabaseHandler db;
     Route route;
     ArrayList<LocationPoint> locationpoints;
     Long now;
     MedianRoute medianRoute;
+
+    SensorManager sensorManager;
+    Sensor accelSensor;
 
     //Method for getting Last location
     private LocationCallback locationCallback = new LocationCallback() {
@@ -47,9 +54,6 @@ public class LocationService extends Service {
                 Long time = locationResult.getLastLocation().getTime();
                 locationpoints.add(new LocationPoint(time, latitude, longitude));
                 medianRoute.addPoint(new LocationPoint(time, latitude, longitude));
-            }
-            if (!medianRoute.checkValidity()) {
-                routeInvalid();
             }
         }
     };
@@ -68,6 +72,13 @@ public class LocationService extends Service {
         route.setTimeStart(System.currentTimeMillis());
         locationpoints = new ArrayList<LocationPoint>();
         medianRoute = new MedianRoute();
+
+
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        Sensor magnetField = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+        sensorManager.registerListener(this, magnetField, Integer.MAX_VALUE);
+
+
 
         LocationRequest locationRequest = new LocationRequest();
         locationRequest.setInterval(0);
@@ -145,11 +156,7 @@ public class LocationService extends Service {
 
     private void insertRouteToDb() {
         route.setTimeEnd(System.currentTimeMillis());
-        //route.setLocationPoints(locationpoints);
-        route.setLocationPoints(medianRoute.getLocationPointsInternal());
-
-        System.out.println(route);
-        System.out.println(medianRoute.getLocationPointsInternal());
+        route.setLocationPoints(medianRoute.getMedianPoints());
 
         db.userDao().insertRoute(route);
 
@@ -168,5 +175,15 @@ public class LocationService extends Service {
             }
         }
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public void onSensorChanged(final SensorEvent event) {
+        
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 }
