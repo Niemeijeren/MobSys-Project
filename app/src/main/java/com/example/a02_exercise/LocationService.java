@@ -16,9 +16,8 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
-import androidx.room.Database;
 
-import com.example.Kalman.MedianRoute;
+import com.example.RouteTracking.MedianRoute;
 import com.example.routes.DatabaseHandler;
 import com.example.routes.LocationPoint;
 import com.example.routes.Route;
@@ -34,7 +33,6 @@ public class LocationService extends Service {
     DatabaseHandler db;
     Route route;
     ArrayList<LocationPoint> locationpoints;
-    int i  = 0;
     Long now;
     MedianRoute medianRoute;
 
@@ -49,9 +47,9 @@ public class LocationService extends Service {
                 Long time = locationResult.getLastLocation().getTime();
                 locationpoints.add(new LocationPoint(time, latitude, longitude));
                 medianRoute.addPoint(new LocationPoint(time, latitude, longitude));
-                i++;
-                System.out.println("times: " + i + " at time: " + (System.currentTimeMillis() - now) / 1000);
-                Log.d("LOCATION_UPDATE", latitude + ", " + longitude);
+            }
+            if (!medianRoute.checkValidity()) {
+                routeInvalid();
             }
         }
     };
@@ -71,6 +69,22 @@ public class LocationService extends Service {
         locationpoints = new ArrayList<LocationPoint>();
         medianRoute = new MedianRoute();
 
+        LocationRequest locationRequest = new LocationRequest();
+        locationRequest.setInterval(0);
+        locationRequest.setFastestInterval(2000);
+        locationRequest.setPriority(locationRequest.PRIORITY_HIGH_ACCURACY);
+
+        this.setNotification();
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        LocationServices.getFusedLocationProviderClient(this)
+                .requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+
+    }
+
+    private void setNotification() {
         String channelId = "location_notification_channel";
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -106,21 +120,22 @@ public class LocationService extends Service {
 
             }
         }
-
-        LocationRequest locationRequest = new LocationRequest();
-        locationRequest.setInterval(0);
-        locationRequest.setFastestInterval(2000);
-        locationRequest.setPriority(locationRequest.PRIORITY_HIGH_ACCURACY);
-
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        LocationServices.getFusedLocationProviderClient(this)
-                .requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
         startForeground(Constants.LOCATION_SERVICE_ID, builder.build());
     }
 
+    /**
+     * Stops the service but doesnt save the route
+     */
+    private void routeInvalid() {
+        route = null;
+        LocationServices.getFusedLocationProviderClient(this)
+                .removeLocationUpdates(locationCallback);
+        stopSelf();
+    }
+
+    /**
+     * Stops the service AND saves the route
+     */
     private void stopLocationService() {
         this.insertRouteToDb();
         LocationServices.getFusedLocationProviderClient(this)
