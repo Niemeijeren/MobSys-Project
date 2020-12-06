@@ -34,9 +34,18 @@ public class MedianRoute {
         }
     }
 
-    public double getAverageSpeed() {
+    public double getAverageSpeedKmh() {
         return averageSpeed;
     }
+
+    public double getAverageSpeedms() {
+        return averageSpeed / 3.6;
+    }
+
+    public double getAverageSpeedMilliSeconds() {
+        return averageSpeed / 3.6 / 1000;
+    }
+
     /**
      * median filter a whole list of locationPoints
      * @param locationPointList
@@ -75,7 +84,8 @@ public class MedianRoute {
         LocationPoint first = locationPointList.get(i);
         double accumulatedSpeed = 0;
         for (int j = i + 1;j < i + 5; j++) {
-            accumulatedSpeed += utils.calculateMetersPerSecond(first, locationPointList.get(j));
+            accumulatedSpeed += utils.calculatekmh(first, locationPointList.get(j));
+            first = locationPointList.get(j);
         }
         accumulatedSpeed = accumulatedSpeed / 4;
         if (this.averageSpeed != 0) {
@@ -85,32 +95,6 @@ public class MedianRoute {
         }
 
         return new LocationPoint(timeAvg / times.size(), lats.get(lats.size() / 2), lons.get(lons.size() / 2));
-    }
-
-    /**
-     * Makes various checks to check the validity of the route for now only average speed over at least 10 location points
-     * @return
-     */
-    public Boolean checkValidity() {
-        if (locationPointsInternal.size() >= 10) {
-            double speedAccumulated = 0;
-            LocationPoint first = locationPointsInternal.get(0);
-            for (int i = 1; i < locationPointsInternal.size(); i++) {
-                LocationPoint next = locationPointsInternal.get(i);
-                speedAccumulated += utils.calculateMetersPerSecond(first, next);
-                first = next;
-            }
-            // From m/s to kmh
-            speedAccumulated = speedAccumulated * 3.6;
-
-            if (speedAccumulated / locationPointsInternal.size() >= 15) {
-                return false;
-            }
-
-        }
-        return true;
-
-
     }
 
 }

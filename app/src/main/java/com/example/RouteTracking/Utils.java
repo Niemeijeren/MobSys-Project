@@ -39,11 +39,10 @@ class Utils {
      * @param locationPoint2 second lat and lon
      * @return double meters per milisecond
      */
-    public static double calculateMetersPerSecond(LocationPoint locationPoint1, LocationPoint locationPoint2) {
+    public static double calculatekmh(LocationPoint locationPoint1, LocationPoint locationPoint2) {
         double distance = calculateDistance(locationPoint1, locationPoint2);
-        double timePassedInSeconds = locationPoint2.getTimeStamp() - locationPoint1.getTimeStamp();
-
-        return (distance / timePassedInSeconds);
+        double timePassedInSecondsMillis = locationPoint2.getTimeStamp() - locationPoint1.getTimeStamp();
+        return (distance / timePassedInSecondsMillis * 1000) * 3.6;
 
 
     }
