@@ -1,23 +1,34 @@
 package com.example.ScrollView;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.RouteTracking.Utils;
 import com.example.a02_exercise.R;
 import com.example.routes.DatabaseHandler;
+import com.example.routes.LocationPoint;
 import com.example.routes.Route;
 
+import org.w3c.dom.Text;
+
+import java.lang.reflect.Array;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder> {
 
     private ArrayList<Route> routes;
     private ItemClickListener mClickListener;
+    private Utils utils = new Utils();
 
     /**
      * Provide a reference to the type of views that you are using
@@ -27,6 +38,8 @@ public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder
         private View view;
         private final TextView itemId;
         private final TextView content;
+        private final TextView length;
+        private final TextView time;
         public Route route;
 
 
@@ -38,6 +51,8 @@ public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder
 
             itemId = (TextView) view.findViewById(R.id.item_ID);
             content = (TextView) view.findViewById(R.id.content);
+            length = (TextView) view.findViewById(R.id.length_of_route);
+            time = (TextView) view.findViewById(R.id.time);
         }
 
         public View getTextView() {
@@ -72,10 +87,46 @@ public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.ViewHolder
 
 
     // Replace the contents of a view (invoked by the layout manager)
+    @SuppressLint("DefaultLocale")
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         viewHolder.route = routes.get(position);
         viewHolder.itemId.setText((position + 1) + "");
+        double length = 0;
+        List<LocationPoint> locations = viewHolder.route.getLocationPoints();
+        if (locations.size() > 10) {
+            LocationPoint first = locations.get(0);
+            locations.remove(0);
+            length = 0;
+            for (LocationPoint locationPoint: locations) {
+                length += utils.calculateDistance(first, locationPoint);
+                first = locationPoint;
+            }
+        }
+
+
+        if (viewHolder.route.getLocationPoints().size() > 10) {
+            Long firstTimeStamp = (viewHolder.route.getLocationPoints().get(0).getTimeStamp());
+            Long lastTimeStamp = (viewHolder.route.getLocationPoints().get(viewHolder.route.getLocationPoints().size() -1).getTimeStamp());
+
+            Long millis = lastTimeStamp - firstTimeStamp;
+
+            viewHolder.time.setText(String.format("%02d min, %02d sec",
+                    TimeUnit.MILLISECONDS.toMinutes(millis),
+                    TimeUnit.MILLISECONDS.toSeconds(millis) -
+                     TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis))
+            ));
+        } else {
+            viewHolder.time.setText("N/A");
+        }
+
+
+        //to km
+        length = length/1000;
+
+        DecimalFormat df = new DecimalFormat("###.##");
+
+        viewHolder.length.setText(df.format(length) + " km");
 
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd,yyyy HH:mm");
         Date resultDate = new Date(viewHolder.route.timeStart());

@@ -14,14 +14,30 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="10"
-        android:layout_margin="16dp"
+        android:layout_margin="8dp"
         android:textAppearance="?attr/textAppearanceListItem" />
 
     <TextView
         android:id="@+id/content"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="75"
-        android:layout_margin="16dp"
+        android:layout_weight="40"
+        android:layout_margin="8dp"
+        android:textAppearance="?attr/textAppearanceListItem" />
+
+    <TextView
+        android:id="@+id/length_of_route"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="20"
+        android:layout_margin="8dp"
+        android:textAppearance="?attr/textAppearanceListItem" />
+
+    <TextView
+        android:id="@+id/time"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="30"
+        android:layout_margin="8dp"
         android:textAppearance="?attr/textAppearanceListItem" />
 </LinearLayout>

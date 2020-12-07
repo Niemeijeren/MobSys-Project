@@ -9,7 +9,7 @@ import static java.lang.Math.min;
 import static java.lang.Math.sin;
 import static java.lang.Math.toRadians;
 
-class Utils {
+public class Utils {
 
     private static final double EARTH_CURVATURE = 3959 * 1.609 * 1000; // meters
 
@@ -19,7 +19,7 @@ class Utils {
      * meters) while taking into account the earth curvature.
      * @param locationPoint1
      * @param locationPoint2
-     * @return
+     * @return distance in meters;
      */
     public static double calculateDistance(LocationPoint locationPoint1, LocationPoint locationPoint2) {
         double c
