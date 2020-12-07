@@ -218,20 +218,12 @@ public class LocationService extends Service implements SensorEventListener {
                 double radian = mOrientation[0];
                 if (locationpoints.size() > 10) {
                     LocationPoint lastLocationPoint =  this.locationpoints.get(locationpoints.size() - 1);
-                    // to from millis to seconds
                     Long currentTime = System.currentTimeMillis();
+                    //to km
+                    double length = medianRoute.getAverageSpeed() * (currentTime - lastLocationPoint.getTimeStamp()) / 1000;
 
-                    double length = medianRoute.getAverageSpeedms() * ((currentTime - lastLocationPoint.getTimeStamp()) / 1000) ;
-
-                    if(length >= 0.05) {
-                        System.out.println("Length 50 meters or more");
-                    }
-
-                    Double lat1 = lastLocationPoint.getLatitude();
-                    Double lon1 = lastLocationPoint.getLongitude();
-
-                    lat1 = Math.toRadians(lat1);
-                    lon1 = Math.toRadians(lon1);
+                    Double lat1 = Math.toRadians(lastLocationPoint.getLatitude());
+                    Double lon1 = Math.toRadians(lastLocationPoint.getLongitude());
 
                     Double lat2 = Math.asin( Math.sin(lat1) * Math.cos(length / R) + Math.cos(lat1) * Math.sin(length / R) * Math.cos(radian));
                     Double lon2 = lon1 + (Math.atan2(Math.sin(radian)*Math.sin(length/R)*Math.cos(lat1), Math.cos(length/R)-Math.sin(lat1)*Math.sin(lat2)));
@@ -239,7 +231,6 @@ public class LocationService extends Service implements SensorEventListener {
                     //New points to input
                     lat2 = Math.toDegrees(lat2);
                     lon2 = Math.toDegrees(lon2);
-
                     System.out.println(lastLocationPoint.getLatitude());
                     System.out.println(lastLocationPoint.getLongitude());
                     System.out.println(lat2);
