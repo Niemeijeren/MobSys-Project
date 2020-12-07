@@ -75,7 +75,8 @@ public class MedianRoute {
         LocationPoint first = locationPointList.get(i);
         double accumulatedSpeed = 0;
         for (int j = i + 1;j < i + 5; j++) {
-            accumulatedSpeed += utils.calculateMetersPerSecond(first, locationPointList.get(j));
+            accumulatedSpeed += utils.calculateMetersPerMillisSecond(first, locationPointList.get(j));
+            first = locationPointList.get(j);
         }
         accumulatedSpeed = accumulatedSpeed / 4;
         if (this.averageSpeed != 0) {
@@ -97,7 +98,7 @@ public class MedianRoute {
             LocationPoint first = locationPointsInternal.get(0);
             for (int i = 1; i < locationPointsInternal.size(); i++) {
                 LocationPoint next = locationPointsInternal.get(i);
-                speedAccumulated += utils.calculateMetersPerSecond(first, next);
+                speedAccumulated += utils.calculateMetersPerMillisSecond(first, next);
                 first = next;
             }
             // From m/s to kmh

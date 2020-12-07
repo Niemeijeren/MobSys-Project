@@ -45,6 +45,12 @@ public class LocationService extends Service implements SensorEventListener {
     Handler handler;
     double R = 6378.1;
 
+    Context context;
+
+    float lastBearing = 0;
+    Double orientation = 0d;
+    int counter = 0;
+
     Boolean sensorChanged = true;
 
     private SensorManager mSensorManager;
@@ -68,6 +74,7 @@ public class LocationService extends Service implements SensorEventListener {
                 Double latitude = locationResult.getLastLocation().getLatitude();
                 Double longitude = locationResult.getLastLocation().getLongitude();
                 Long time = locationResult.getLastLocation().getTime();
+                //lastBearing = locationResult.getLastLocation().getBearing();
                 locationpoints.add(new LocationPoint(time, latitude, longitude));
                 medianRoute.addPoint(new LocationPoint(time, latitude, longitude));
             }
@@ -82,13 +89,13 @@ public class LocationService extends Service implements SensorEventListener {
 
 
     private void startLocationService() {
+        context = this;
         now = System.currentTimeMillis();
         db = DatabaseHandler.getInstance(this.getApplicationContext());
         route = new Route();
         route.setTimeStart(System.currentTimeMillis());
         locationpoints = new ArrayList<LocationPoint>();
         medianRoute = new MedianRoute();
-
 
 
         handler = new Handler(this.getApplicationContext().getMainLooper());
@@ -178,18 +185,18 @@ public class LocationService extends Service implements SensorEventListener {
         route.setTimeEnd(System.currentTimeMillis());
         route.setLocationPoints(medianRoute.getMedianPoints());
 
-         db.userDao().insertRoute(route);
+        db.userDao().insertRoute(route);
 
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(intent != null){
+        if (intent != null) {
             String action = intent.getAction();
-            if(action != null){
-                if (action.equals(Constants.ACTION_START_LOCATION_SERVICE)){
+            if (action != null) {
+                if (action.equals(Constants.ACTION_START_LOCATION_SERVICE)) {
                     startLocationService();
-                } else if (action.equals(Constants.ACTION_STOP_LOCATION_SERVICE)){
+                } else if (action.equals(Constants.ACTION_STOP_LOCATION_SERVICE)) {
                     stopLocationService();
                 }
             }
@@ -201,59 +208,92 @@ public class LocationService extends Service implements SensorEventListener {
     @Override
     public void onSensorChanged(final SensorEvent event) {
         if (sensorChanged) {
-            sensorChanged = false;
 
-            if (event.sensor == mAccelerometer) {
-                System.arraycopy(event.values, 0, mLastAccelerometer, 0, event.values.length);
-                mLastAccelerometerSet = true;
-            } else if (event.sensor == mMagnetometer) {
-                System.arraycopy(event.values, 0, mLastMagnetometer, 0, event.values.length);
-                mLastMagnetometerSet = true;
-            }
-            if (mLastAccelerometerSet && mLastMagnetometerSet) {
-                SensorManager.getRotationMatrix(mR, null, mLastAccelerometer, mLastMagnetometer);
-                SensorManager.getOrientation(mR, mOrientation);
-                //System.out.println("OrientationTestActivity" + String.format("Orientation: %f, %f, %f", mOrientation[0], mOrientation[1], mOrientation[2]));
+            if (counter < 10) {
 
-                double radian = mOrientation[0];
-                if (locationpoints.size() > 10) {
-                    LocationPoint lastLocationPoint =  this.locationpoints.get(locationpoints.size() - 1);
-                    Long currentTime = System.currentTimeMillis();
-                    //to km
-                    double length = medianRoute.getAverageSpeed() * (currentTime - lastLocationPoint.getTimeStamp()) / 1000;
+                counter++;
 
-                    Double lat1 = Math.toRadians(lastLocationPoint.getLatitude());
-                    Double lon1 = Math.toRadians(lastLocationPoint.getLongitude());
-
-                    Double lat2 = Math.asin( Math.sin(lat1) * Math.cos(length / R) + Math.cos(lat1) * Math.sin(length / R) * Math.cos(radian));
-                    Double lon2 = lon1 + (Math.atan2(Math.sin(radian)*Math.sin(length/R)*Math.cos(lat1), Math.cos(length/R)-Math.sin(lat1)*Math.sin(lat2)));
-
-                    //New points to input
-                    lat2 = Math.toDegrees(lat2);
-                    lon2 = Math.toDegrees(lon2);
-                    System.out.println(lastLocationPoint.getLatitude());
-                    System.out.println(lastLocationPoint.getLongitude());
-                    System.out.println(lat2);
-                    System.out.println(lon2);
-                    LocationPoint newPoint = new LocationPoint(currentTime, lat2, lon2);
-                    medianRoute.addPoint(newPoint);
+                if (event.sensor == mAccelerometer) {
+                    System.arraycopy(event.values, 0, mLastAccelerometer, 0, event.values.length);
+                    mLastAccelerometerSet = true;
+                } else if (event.sensor == mMagnetometer) {
+                    System.arraycopy(event.values, 0, mLastMagnetometer, 0, event.values.length);
+                    mLastMagnetometerSet = true;
                 }
+                if (mLastAccelerometerSet && mLastMagnetometerSet) {
+                    SensorManager.getRotationMatrix(mR, null, mLastAccelerometer, mLastMagnetometer);
+                    SensorManager.getOrientation(mR, mOrientation);
 
 
-            }
+                    double radian = mOrientation[0];
+                    orientation += radian;
 
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    sensorChanged = true;
+                    System.out.println(counter + " orientation read: " + orientation);
 
+                    if (counter == 9) {
+                        orientation = orientation / counter;
+                        orientation = Math.toDegrees(orientation);
+                        System.out.println("Average orientation: " + orientation);
+                        System.out.println("Last bearing: " + lastBearing);
+                        if (orientation <= (lastBearing + 20) && orientation >= (lastBearing - 20)) {
+                            System.out.println("Last bearing and orientation close to each other");
+                            if (locationpoints.size() > 10) {
+                                LocationPoint lastLocationPoint = this.locationpoints.get(locationpoints.size() - 1);
+                                Long currentTime = System.currentTimeMillis();
+                                //to km
+                                double length = medianRoute.getAverageSpeed() * (currentTime - lastLocationPoint.getTimeStamp());
+                                length = length / 1000;
+
+                                Double lat1 = Math.toRadians(lastLocationPoint.getLatitude());
+                                Double lon1 = Math.toRadians(lastLocationPoint.getLongitude());
+
+                                Double lat2 = Math.asin(Math.sin(lat1) * Math.cos(length / R) + Math.cos(lat1) * Math.sin(length / R) * Math.cos(radian));
+                                Double lon2 = lon1 + (Math.atan2(Math.sin(radian) * Math.sin(length / R) * Math.cos(lat1), Math.cos(length / R) - Math.sin(lat1) * Math.sin(lat2)));
+
+                                //New points to input
+                                lat2 = Math.toDegrees(lat2);
+                                lon2 = Math.toDegrees(lon2);
+                                System.out.println(lastLocationPoint.getLatitude());
+                                System.out.println(lastLocationPoint.getLongitude());
+                                System.out.println(lat2);
+                                System.out.println(lon2);
+                                LocationPoint newPoint = new LocationPoint(currentTime, lat2, lon2);
+                                medianRoute.addPoint(newPoint);
+
+                                LocationRequest stopReuest = new LocationRequest();
+                                stopReuest.setPriority(LocationRequest.PRIORITY_NO_POWER);
+                                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                                    return;
+                                }
+                                LocationServices.getFusedLocationProviderClient(this).requestLocationUpdates(stopReuest, locationCallback, Looper.getMainLooper());
+                                handler.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        LocationRequest startRequest = new LocationRequest();
+                                        startRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+                                        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                                            return;
+                                        }
+                                        LocationServices.getFusedLocationProviderClient(context).requestLocationUpdates(startRequest, locationCallback, Looper.getMainLooper());
+                                    }
+                                }, 15000);
+                            }
+
+                        }
+                        counter = 0;
+                        orientation = 0d;
+                        sensorChanged = false;
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                sensorChanged = true;
+
+                            }
+                        }, 8000);
+                    }
                 }
-            }, 2000);
+            }
         }
-
-
-
-
     }
 
     @Override
