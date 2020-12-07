@@ -45,6 +45,9 @@ public class LocationService extends Service implements SensorEventListener {
     Handler handler;
     double R = 6378.1;
 
+    long cycleTimer = 8000;
+    long startTimer = 8000;
+
     Context context;
 
     float lastBearing = 0;
@@ -187,7 +190,6 @@ public class LocationService extends Service implements SensorEventListener {
         if (locationpoints.size() > 10) {
             db.userDao().insertRoute(route);
         }
-
     }
 
     @Override
@@ -236,6 +238,7 @@ public class LocationService extends Service implements SensorEventListener {
                     System.out.println("last orientation: " + orientation);
                     System.out.println("last bearing: " + lastBearing);
                     if (orientation <= (lastBearing + 20) && orientation >= (lastBearing - 20)) {
+                        cycleTimer += 4000l;
                         if (locationpoints.size() > 10) {
                             LocationPoint lastLocationPoint = this.locationpoints.get(locationpoints.size() - 1);
                             Long currentTime = System.currentTimeMillis();
@@ -264,6 +267,7 @@ public class LocationService extends Service implements SensorEventListener {
                                 return;
                             }
                             LocationServices.getFusedLocationProviderClient(this).requestLocationUpdates(stopReuest, locationCallback, Looper.getMainLooper());
+                            cycleTimer = startTimer;
                             handler.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
@@ -274,9 +278,11 @@ public class LocationService extends Service implements SensorEventListener {
                                     }
                                     LocationServices.getFusedLocationProviderClient(context).requestLocationUpdates(startRequest, locationCallback, Looper.getMainLooper());
                                 }
-                            }, 15000);
+                            }, 4 * cycleTimer);
                         }
 
+                    } else {
+                        cycleTimer = startTimer;
                     }
                     mSensorManager.unregisterListener((SensorEventListener)context, mMagnetometer);
                     mSensorManager.unregisterListener((SensorEventListener)context, mAccelerometer);
@@ -288,7 +294,7 @@ public class LocationService extends Service implements SensorEventListener {
                             mSensorManager.registerListener((SensorEventListener) context, mMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
                             mSensorManager.registerListener((SensorEventListener)context, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
                         }
-                    }, 8000);
+                    }, cycleTimer);
 
                 }
             }
