@@ -8,23 +8,30 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.GradientDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.BatteryManager;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
 import com.example.RouteTracking.MedianRoute;
+import com.example.RouteTracking.Utils;
 import com.example.routes.DatabaseHandler;
 import com.example.routes.LocationPoint;
 import com.example.routes.Route;
@@ -33,7 +40,15 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.TreeMap;
 
 public class LocationService extends Service implements SensorEventListener {
 
@@ -53,6 +68,7 @@ public class LocationService extends Service implements SensorEventListener {
     float lastBearing = 0;
     double orientation = 0;
     int counter = 0;
+    LocationRequest locationRequest;
 
     Boolean sensorChanged = true;
 
@@ -68,6 +84,11 @@ public class LocationService extends Service implements SensorEventListener {
     private float[] mR = new float[9];
     private float[] mOrientation = new float[3];
 
+    List<Float> gpsBearings = new ArrayList<>();
+    List<Double> senBearings = new ArrayList<>();
+
+    TreeMap<Long, String> map = new TreeMap();
+
     //Method for getting Last location
     private LocationCallback locationCallback = new LocationCallback() {
         @Override
@@ -78,7 +99,9 @@ public class LocationService extends Service implements SensorEventListener {
                 Double longitude = locationResult.getLastLocation().getLongitude();
                 Long time = locationResult.getLastLocation().getTime();
                 lastBearing = locationResult.getLastLocation().getBearing();
+                gpsBearings.add(lastBearing);
                 locationpoints.add(new LocationPoint(time, latitude, longitude));
+                map.put(time, "gps");
                 medianRoute.addPoint(new LocationPoint(time, latitude, longitude));
             }
         }
@@ -105,12 +128,12 @@ public class LocationService extends Service implements SensorEventListener {
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mMagnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-        mSensorManager.registerListener(this, mMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener((SensorEventListener) context, mMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener((SensorEventListener) context, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 
-        LocationRequest locationRequest = new LocationRequest();
-        locationRequest.setInterval(5000);
-        locationRequest.setFastestInterval(3000);
+        locationRequest = LocationRequest.create();
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(5000);
         locationRequest.setPriority(locationRequest.PRIORITY_HIGH_ACCURACY);
 
         this.setNotification();
@@ -120,7 +143,6 @@ public class LocationService extends Service implements SensorEventListener {
         }
         LocationServices.getFusedLocationProviderClient(this)
                 .requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
-
     }
 
     private void setNotification() {
@@ -185,11 +207,40 @@ public class LocationService extends Service implements SensorEventListener {
 
     private void insertRouteToDb() {
         route.setTimeEnd(System.currentTimeMillis());
-        route.setLocationPoints(medianRoute.getMedianPoints());
 
-        if (locationpoints.size() > 10) {
+        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = context.registerReceiver(null, ifilter);
+
+        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+
+        float batteryPct = level * 100 / (float) scale;
+
+
+        this.saveData();
+
+
+        PowerManager powerManager = (PowerManager)
+                this.getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && powerManager.isPowerSaveMode() || batteryPct <= 25) {
+            //Not CPU heavy
+            route.setLocationPoints(medianRoute.getMedianPoints());
+            db.userDao().insertRoute(route);
+        } else {
+            //CPU heavy
+            route.setLocationPoints(Utils.reduceNumberOfPointsByProximity(medianRoute.getMedianPoints()));
             db.userDao().insertRoute(route);
         }
+
+        //Points come in chronological order so its possible to simply take every 3 location points
+        //And add them together to reduce the overall number of location points saved
+        //And thereby save space on the decive though sacrificing some CPU
+        //Another approach can be to find every within 1 point for example 5 meters and
+        //Turn it into one point then do that until no points are within 5 meters of each each
+        //But that would take O(n*n) time approximately.
+        //And also consume alot more resources compared to just averaging points O(n)
+
+
     }
 
     @Override
@@ -235,10 +286,18 @@ public class LocationService extends Service implements SensorEventListener {
                 if (counter == 9) {
                     orientation = orientation / counter;
                     orientation = Math.toDegrees(orientation);
+                    orientation = (orientation + 360) % 360;
+                    senBearings.add(orientation);
                     System.out.println("last orientation: " + orientation);
                     System.out.println("last bearing: " + lastBearing);
-                    if (orientation <= (lastBearing + 20) && orientation >= (lastBearing - 20)) {
-                        cycleTimer += 4000l;
+                    //if (orientation <= ((lastBearing + 20 + 360)) % 360 && orientation >= ((lastBearing - 20 + 360) % 360)) {
+                    int interval = 10;
+                    if ((((Math.abs((lastBearing - orientation) % 360) < interval)
+                            || (Math.abs((lastBearing - orientation) % 360) > 360 - interval))
+                            || (Math.abs((orientation - lastBearing) % 360) < interval))
+                            || (Math.abs((orientation - lastBearing) % 360) > 360 - interval)) {
+                        cycleTimer += 4000;
+                        System.out.println("interval increased to: " + cycleTimer);
                         if (locationpoints.size() > 10) {
                             LocationPoint lastLocationPoint = this.locationpoints.get(locationpoints.size() - 1);
                             Long currentTime = System.currentTimeMillis();
@@ -258,47 +317,100 @@ public class LocationService extends Service implements SensorEventListener {
                             System.out.println(lat2);
                             System.out.println(lon2);
                             LocationPoint newPoint = new LocationPoint(currentTime, lat2, lon2);
-                            lastBearing = (float)orientation;
+                            map.put(currentTime, "compass");
+                            lastBearing = (float) orientation;
                             medianRoute.addPoint(newPoint);
 
-                            LocationRequest stopReuest = new LocationRequest();
-                            stopReuest.setPriority(LocationRequest.PRIORITY_NO_POWER);
+                            locationRequest.setPriority(LocationRequest.PRIORITY_NO_POWER);
                             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                                 return;
                             }
-                            LocationServices.getFusedLocationProviderClient(this).requestLocationUpdates(stopReuest, locationCallback, Looper.getMainLooper());
-                            cycleTimer = startTimer;
+                            locationRequest.setInterval(60000);
+                            locationRequest.setFastestInterval(45000);
+                            LocationServices.getFusedLocationProviderClient(this).requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
                             handler.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
-                                    LocationRequest startRequest = new LocationRequest();
-                                    startRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+                                    cycleTimer = startTimer;
+                                    System.out.println("cycletimer reset: " + cycleTimer);
+                                    locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+                                    locationRequest.setInterval(5000);
+                                    locationRequest.setFastestInterval(3000);
                                     if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                                         return;
                                     }
-                                    LocationServices.getFusedLocationProviderClient(context).requestLocationUpdates(startRequest, locationCallback, Looper.getMainLooper());
+                                    LocationServices.getFusedLocationProviderClient(context).requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
                                 }
                             }, 4 * cycleTimer);
                         }
 
                     } else {
+                        System.out.println("Cycletimer reset to " + startTimer);
                         cycleTimer = startTimer;
                     }
-                    mSensorManager.unregisterListener((SensorEventListener)context, mMagnetometer);
-                    mSensorManager.unregisterListener((SensorEventListener)context, mAccelerometer);
+                    mSensorManager.unregisterListener((SensorEventListener) context, mMagnetometer);
+                    mSensorManager.unregisterListener((SensorEventListener) context, mAccelerometer);
                     counter = 0;
                     orientation = 0d;
                     handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
                             mSensorManager.registerListener((SensorEventListener) context, mMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
-                            mSensorManager.registerListener((SensorEventListener)context, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+                            mSensorManager.registerListener((SensorEventListener) context, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
                         }
                     }, cycleTimer);
-
                 }
             }
         }
+    }
+
+    private void saveData() {
+
+        try {
+
+            String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath() + "/" + "sems/";
+            File dir = new File(path);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                System.out.println("Permission granted");
+
+                String fullName;
+                File file;
+
+                FileWriter fw;
+                BufferedWriter bw;
+
+                String str = "Timestamp, Tag\n";
+
+                Iterator it = map.entrySet().iterator();
+                while (it.hasNext()) {
+                    HashMap.Entry pair = (HashMap.Entry) it.next();
+                    Long timeStamp = (Long) pair.getKey();
+                    String value = (String) pair.getValue();
+
+                    str += timeStamp + "," + value + "\n";
+                    it.remove(); // avoids a ConcurrentModificationException
+                }
+
+                fullName = path + "gpsVsCompass" + System.currentTimeMillis() / 1000 + ".csv";
+                file = new File(fullName);
+
+                fw = new FileWriter(file.getAbsoluteFile());
+                bw = new BufferedWriter(fw);
+                bw.write(str);
+
+                bw.close();
+            }
+
+        } catch (
+                IOException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     @Override

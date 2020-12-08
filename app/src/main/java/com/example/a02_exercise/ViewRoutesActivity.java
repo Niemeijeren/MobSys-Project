@@ -10,12 +10,15 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.RouteTracking.Utils;
 import com.example.ScrollView.RoutesAdapter;
 import com.example.routes.DataConverter;
 import com.example.routes.DatabaseHandler;
+import com.example.routes.LocationPoint;
 import com.example.routes.Route;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ViewRoutesActivity extends AppCompatActivity implements RoutesAdapter.ItemClickListener {
 
@@ -51,8 +54,16 @@ public class ViewRoutesActivity extends AppCompatActivity implements RoutesAdapt
     public void onItemClick(View view, int position) {
 
         Route route = adapter.getRoute(position);
+
+        System.out.println("Before: " + route.getLocationPoints().size());
+
+        //List<LocationPoint> points = Utils.reduceNumberOfPointsByProximity(route.getLocationPoints());
+        List<LocationPoint> points = route.getLocationPoints();
+
+        System.out.println("After: " + points.size());
+
         Intent myIntent = new Intent(ViewRoutesActivity.this, MapsActivity.class);
-        String RouteToLocationsJson = dataConverter.fromOptionValuesList(route.getLocationPoints());
+        String RouteToLocationsJson = dataConverter.fromOptionValuesList(points);
         myIntent.putExtra("locations", RouteToLocationsJson); //Optional parameters
         ViewRoutesActivity.this.startActivity(myIntent);
 

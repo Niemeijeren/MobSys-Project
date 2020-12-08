@@ -57,6 +57,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         String locationsString = (String)getIntent().getExtras().get("locations");
         List<LocationPoint> locations = dataConverter.toOptionValuesList(locationsString);
 
+        System.out.println("After: " + locations.size());
+
         List<LatLng> latlngs = new ArrayList<>();
         for(LocationPoint locationPoint : locations){
             latlngs.add(new LatLng(locationPoint.getLatitude(), locationPoint.getLongitude()));
