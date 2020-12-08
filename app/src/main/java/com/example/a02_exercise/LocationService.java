@@ -8,7 +8,12 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
@@ -21,8 +26,39 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.opencsv.CSVWriter;
 
-public class LocationService extends Service {
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class LocationService extends Service implements SensorEventListener {
+
+    SensorManager mSensorManager;
+    private Sensor mAccelerometer;
+    private Sensor mMagnetometer;
+    Handler handler;
+    double R = 6378.1;
+
+    double orientation = 0;
+    int counter = 0;
+    Context context;
+
+    private float[] mLastAccelerometer = new float[3];
+    private float[] mLastMagnetometer = new float[3];
+    private boolean mLastAccelerometerSet = false;
+    private boolean mLastMagnetometerSet = false;
+
+    private float[] mR = new float[9];
+    private float[] mOrientation = new float[3];
+
+    List<String[]> data = new ArrayList<String[]>();
+
+    List<String>  gpsBearings = new ArrayList<String>();
+    List<String>  senBearings = new ArrayList<String>();
+
+
 
     //Method for getting Last location
     private LocationCallback locationCallback = new LocationCallback() {
@@ -30,9 +66,9 @@ public class LocationService extends Service {
         public void onLocationResult(LocationResult locationResult) {
             super.onLocationResult(locationResult);
             if (locationResult != null && locationResult.getLastLocation() != null) {
-                double latitude = locationResult.getLastLocation().getLatitude();
-                double longitude = locationResult.getLastLocation().getLongitude();
-                Log.d("LOCATION_UPDATE", latitude + ", " + longitude);
+                double bearing = locationResult.getLastLocation().getBearing();
+                System.out.println("GPS Bearing " + bearing + " at time " + System.currentTimeMillis());
+                gpsBearings.add(bearing + "");
             }
         }
     };
@@ -56,11 +92,20 @@ public class LocationService extends Service {
                 PendingIntent.FLAG_UPDATE_CURRENT
         );
 
+        handler = new Handler(this.getApplicationContext().getMainLooper());
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mMagnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        mSensorManager.registerListener( this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(this, mMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
+        context = this;
+        
+        
         NotificationCompat.Builder builder = new NotificationCompat.Builder(
                 getApplicationContext(),
                 channelId
         );
-        builder.setSmallIcon(R.mipmap.ic_launcher);
+        // builder.setSmallIcon(R.mipmap.ic_launcher);
         builder.setContentTitle("Location Service");
         builder.setDefaults(NotificationCompat.DEFAULT_ALL);
         builder.setContentText("Running");
@@ -82,8 +127,8 @@ public class LocationService extends Service {
         }
 
         LocationRequest locationRequest = new LocationRequest();
-        locationRequest.setInterval(4000);
-        locationRequest.setFastestInterval(2000);
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(10000);
         locationRequest.setPriority(locationRequest.PRIORITY_HIGH_ACCURACY);
 
 
@@ -102,9 +147,11 @@ public class LocationService extends Service {
         startForeground(Constants.LOCATION_SERVICE_ID, builder.build());
     }
 
-    private void stopLocationService(){
+    private void stopLocationService() throws IOException {
+        saveData();
         LocationServices.getFusedLocationProviderClient(this)
                 .removeLocationUpdates(locationCallback);
+        mSensorManager.unregisterListener(this);
         stopSelf();
     }
 
@@ -116,10 +163,84 @@ public class LocationService extends Service {
                 if (action.equals(Constants.ACTION_START_LOCATION_SERVICE)){
                     startLocationService();
                 } else if (action.equals(Constants.ACTION_STOP_LOCATION_SERVICE)){
-                    stopLocationService();
+                    try {
+                        stopLocationService();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+
+        if (counter < 10) {
+
+            counter++;
+
+            if (event.sensor == mAccelerometer) {
+                System.arraycopy(event.values, 0, mLastAccelerometer, 0, event.values.length);
+                mLastAccelerometerSet = true;
+            } else if (event.sensor == mMagnetometer) {
+                System.arraycopy(event.values, 0, mLastMagnetometer, 0, event.values.length);
+                mLastMagnetometerSet = true;
+            }
+            if (mLastAccelerometerSet && mLastMagnetometerSet) {
+                SensorManager.getRotationMatrix(mR, null, mLastAccelerometer, mLastMagnetometer);
+                SensorManager.getOrientation(mR, mOrientation);
+
+
+                double radian = mOrientation[0];
+                orientation += radian;
+
+                //System.out.println(counter + " orientation read: " + orientation);
+
+                if (counter == 9) {
+                    orientation = orientation / counter;
+                    orientation = Math.toDegrees(orientation);
+                    System.out.println("Sen Bearing " + orientation +  " at time " + System.currentTimeMillis());
+                    senBearings.add(orientation + "");
+
+                    mSensorManager.unregisterListener((SensorEventListener)context, mMagnetometer);
+                    mSensorManager.unregisterListener((SensorEventListener)context, mAccelerometer);
+                    counter = 0;
+                    orientation = 0d;
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            mSensorManager.registerListener((SensorEventListener) context, mMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
+                            mSensorManager.registerListener((SensorEventListener)context, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+                        }
+                    }, 10000);
+
+                }
+            }
+        }
+
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
+
+    private void saveData() throws IOException {
+        String csv = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
+        CSVWriter writer = new CSVWriter(new FileWriter(csv));
+
+        System.out.println("Saving Data");
+
+        data.add(new String[] {"SensorBearing", "GpsBearing"});
+
+        for (int i = 0; i < senBearings.size() && i < gpsBearings.size() ; i++) {
+            data.add(new String[] {senBearings.get(i), gpsBearings.get(i)});
+        }
+        System.out.println(data.toString());
+
+        writer.writeAll(data);
+        writer.close();
     }
 }

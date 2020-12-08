@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static final int REQUEST_CODE_LOCATION_PERMISSION = 1;
     SensorManager sensorManager;
     Sensor accelSensor;
+    Intent intent;
 
 
     @Override
@@ -77,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        Log.d(TAG, "onSensorChanged: X: " + event.values[0] + " Y: " + event.values[1] + " Z: " + event.values[2]);
+        // Log.d(TAG, "onSensorChanged: X: " + event.values[0] + " Y: " + event.values[1] + " Z: " + event.values[2]);
     }
 
     @Override
@@ -104,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void startLocationService(){
         if (!LocationServiceRunning()){
-            Intent intent = new Intent(getApplicationContext(), LocationService.class);
+            intent = new Intent(getApplicationContext(), LocationService.class);
             intent.setAction(Constants.ACTION_START_LOCATION_SERVICE);
             startService(intent);
             Toast.makeText(this, "location service started", Toast.LENGTH_SHORT).show();
@@ -114,7 +115,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void stopLocationService(){
         if(LocationServiceRunning()){
-            Intent intent = new Intent(getApplicationContext(), LocationService.class);
             intent.setAction(Constants.ACTION_STOP_LOCATION_SERVICE);
             startService(intent);
             Toast.makeText(this, "location service stopped", Toast.LENGTH_SHORT).show();
