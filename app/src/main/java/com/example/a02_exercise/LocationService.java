@@ -149,9 +149,9 @@ public class LocationService extends Service implements SensorEventListener {
 
     private void stopLocationService() throws IOException {
         saveData();
+        mSensorManager.unregisterListener(this);
         LocationServices.getFusedLocationProviderClient(this)
                 .removeLocationUpdates(locationCallback);
-        mSensorManager.unregisterListener(this);
         stopSelf();
     }
 
@@ -228,8 +228,8 @@ public class LocationService extends Service implements SensorEventListener {
     }
 
     private void saveData() throws IOException {
-        String csv = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
-        CSVWriter writer = new CSVWriter(new FileWriter(csv));
+        // String csv = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
+        // CSVWriter writer = new CSVWriter(new FileWriter(csv));
 
         System.out.println("Saving Data");
 
@@ -238,9 +238,9 @@ public class LocationService extends Service implements SensorEventListener {
         for (int i = 0; i < senBearings.size() && i < gpsBearings.size() ; i++) {
             data.add(new String[] {senBearings.get(i), gpsBearings.get(i)});
         }
-        System.out.println(data.toString());
+        System.out.println(data);
 
-        writer.writeAll(data);
-        writer.close();
+        // writer.writeAll(data);
+        // writer.close();
     }
 }

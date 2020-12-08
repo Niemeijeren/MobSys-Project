@@ -117,6 +117,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if(LocationServiceRunning()){
             intent.setAction(Constants.ACTION_STOP_LOCATION_SERVICE);
             startService(intent);
+            System.out.println("I WAS HERE");
             Toast.makeText(this, "location service stopped", Toast.LENGTH_SHORT).show();
 
         }
