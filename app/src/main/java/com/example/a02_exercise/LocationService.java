@@ -132,8 +132,8 @@ public class LocationService extends Service implements SensorEventListener {
         mSensorManager.registerListener((SensorEventListener) context, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 
         locationRequest = LocationRequest.create();
-        locationRequest.setInterval(10000);
-        locationRequest.setFastestInterval(5000);
+        locationRequest.setInterval(6000);
+        locationRequest.setFastestInterval(3000);
         locationRequest.setPriority(locationRequest.PRIORITY_HIGH_ACCURACY);
 
         this.setNotification();
@@ -228,7 +228,8 @@ public class LocationService extends Service implements SensorEventListener {
             db.userDao().insertRoute(route);
         } else {
             //CPU heavy
-            route.setLocationPoints(Utils.reduceNumberOfPointsByProximity(medianRoute.getMedianPoints()));
+            route.setLocationPoints(medianRoute.getMedianPoints());
+            //route.setLocationPoints(Utils.reduceNumberOfPointsByProximity(medianRoute.getMedianPoints()));
             db.userDao().insertRoute(route);
         }
 
@@ -290,12 +291,12 @@ public class LocationService extends Service implements SensorEventListener {
                     senBearings.add(orientation);
                     System.out.println("last orientation: " + orientation);
                     System.out.println("last bearing: " + lastBearing);
-                    //if (orientation <= ((lastBearing + 20 + 360)) % 360 && orientation >= ((lastBearing - 20 + 360) % 360)) {
-                    int interval = 10;
-                    if ((((Math.abs((lastBearing - orientation) % 360) < interval)
+                    int interval = 15;
+                    if ((((     Math.abs((lastBearing - orientation) % 360) < interval)
                             || (Math.abs((lastBearing - orientation) % 360) > 360 - interval))
                             || (Math.abs((orientation - lastBearing) % 360) < interval))
-                            || (Math.abs((orientation - lastBearing) % 360) > 360 - interval)) {
+                            || (Math.abs((orientation - lastBearing) % 360) > 360 - interval))
+                    {
                         cycleTimer += 4000;
                         System.out.println("interval increased to: " + cycleTimer);
                         if (locationpoints.size() > 10) {
@@ -318,7 +319,7 @@ public class LocationService extends Service implements SensorEventListener {
                             System.out.println(lon2);
                             LocationPoint newPoint = new LocationPoint(currentTime, lat2, lon2);
                             map.put(currentTime, "compass");
-                            lastBearing = (float) orientation;
+                            //lastBearing = (float) orientation;
                             medianRoute.addPoint(newPoint);
 
                             locationRequest.setPriority(LocationRequest.PRIORITY_NO_POWER);
@@ -328,6 +329,7 @@ public class LocationService extends Service implements SensorEventListener {
                             locationRequest.setInterval(60000);
                             locationRequest.setFastestInterval(45000);
                             LocationServices.getFusedLocationProviderClient(this).requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+                            System.out.println("Gps will start again in: " +  ((System.currentTimeMillis() - System.currentTimeMillis()) + (1000* (2 * cycleTimer)) / 1000) + " Seconds");
                             handler.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
@@ -341,7 +343,7 @@ public class LocationService extends Service implements SensorEventListener {
                                     }
                                     LocationServices.getFusedLocationProviderClient(context).requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
                                 }
-                            }, 4 * cycleTimer);
+                            }, 2 * cycleTimer);
                         }
 
                     } else {
