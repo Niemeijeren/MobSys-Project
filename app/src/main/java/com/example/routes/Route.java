@@ -30,6 +30,17 @@ public class Route {
     @ColumnInfo(name = "locationsPoints")
     private List<LocationPoint> locationPoints;
 
+    @ColumnInfo(name = "points")
+    private int points;
+
+    public void setPoints(int points) {
+        this.points = points;
+    }
+
+    public int getPoints() {
+        return points;
+    }
+
 
     public void setLocationPoints(List<LocationPoint> list) {
         this.locationPoints = list;

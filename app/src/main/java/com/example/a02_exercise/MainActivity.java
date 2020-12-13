@@ -15,12 +15,23 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.PopupWindow;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.routes.DatabaseHandler;
 import com.example.routes.LocationPoint;
 import com.example.routes.Route;
+
+import org.w3c.dom.Text;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -146,10 +157,21 @@ public class MainActivity extends AppCompatActivity {
             findViewById(R.id.btnStop).setVisibility(View.INVISIBLE);
             findViewById(R.id.btnStart).setVisibility(View.VISIBLE);
         }
+        this.showPopup();
     }
 
+    public void showPopup() {
+
+        PopUpClass popUpClass = new PopUpClass();
+
+        if (db.userDao().getAllRoutes().size() > 0) {
+            Route lastRoute = db.userDao().getAllRoutes().get(db.userDao().getAllRoutes().size() - 1);
+            popUpClass.showPopupWindow(findViewById(R.id.btnStart), lastRoute);
+        }
+
+        popUpClass.showPopupWindow(findViewById(R.id.btnStart), null);
 
 
-
+    }
 
 }

@@ -113,7 +113,6 @@ public class LocationService extends Service implements SensorEventListener {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-
     private void startLocationService() {
         context = this;
         now = System.currentTimeMillis();
@@ -188,7 +187,6 @@ public class LocationService extends Service implements SensorEventListener {
      * Stops the service but doesnt save the route
      */
     private void routeInvalid() {
-        route = null;
         LocationServices.getFusedLocationProviderClient(this)
                 .removeLocationUpdates(locationCallback);
         stopSelf();
@@ -217,7 +215,16 @@ public class LocationService extends Service implements SensorEventListener {
         float batteryPct = level * 100 / (float) scale;
 
 
-        this.saveData();
+        //this.saveData();
+
+        if (medianRoute.checkValidity()) {
+            //100 points for kilometer
+            //2 points per minute
+            int points = (int) medianRoute.getLengthOfRouteKm() * 100 + (int) medianRoute.getTimeOfRoute() * 2;
+            route.setPoints(points);
+        } else {
+            route.setPoints(0);
+        }
 
 
         PowerManager powerManager = (PowerManager)
@@ -228,8 +235,8 @@ public class LocationService extends Service implements SensorEventListener {
             db.userDao().insertRoute(route);
         } else {
             //CPU heavy
-            route.setLocationPoints(medianRoute.getMedianPoints());
-            //route.setLocationPoints(Utils.reduceNumberOfPointsByProximity(medianRoute.getMedianPoints()));
+            //route.setLocationPoints(medianRoute.getMedianPoints());
+            route.setLocationPoints(Utils.reduceNumberOfPointsByProximity(medianRoute.getMedianPoints()));
             db.userDao().insertRoute(route);
         }
 
@@ -292,11 +299,10 @@ public class LocationService extends Service implements SensorEventListener {
                     System.out.println("last orientation: " + orientation);
                     System.out.println("last bearing: " + lastBearing);
                     int interval = 15;
-                    if ((((     Math.abs((lastBearing - orientation) % 360) < interval)
+                    if ((((Math.abs((lastBearing - orientation) % 360) < interval)
                             || (Math.abs((lastBearing - orientation) % 360) > 360 - interval))
                             || (Math.abs((orientation - lastBearing) % 360) < interval))
-                            || (Math.abs((orientation - lastBearing) % 360) > 360 - interval))
-                    {
+                            || (Math.abs((orientation - lastBearing) % 360) > 360 - interval)) {
                         cycleTimer += 4000;
                         System.out.println("interval increased to: " + cycleTimer);
                         if (locationpoints.size() > 10) {
@@ -329,7 +335,7 @@ public class LocationService extends Service implements SensorEventListener {
                             locationRequest.setInterval(60000);
                             locationRequest.setFastestInterval(45000);
                             LocationServices.getFusedLocationProviderClient(this).requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
-                            System.out.println("Gps will start again in: " +  ((System.currentTimeMillis() - System.currentTimeMillis()) + (1000* (2 * cycleTimer)) / 1000) + " Seconds");
+                            System.out.println("Gps will start again in: " + ((System.currentTimeMillis() - System.currentTimeMillis()) + (1000 * (2 * cycleTimer)) / 1000) + " Seconds");
                             handler.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
@@ -366,6 +372,7 @@ public class LocationService extends Service implements SensorEventListener {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private void saveData() {
 
         try {

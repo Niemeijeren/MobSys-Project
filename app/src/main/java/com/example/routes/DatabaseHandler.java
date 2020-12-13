@@ -15,7 +15,7 @@ public abstract class DatabaseHandler extends RoomDatabase {
     public static DatabaseHandler getInstance(Context context) {
         if(instance == null) {
             instance = Room.databaseBuilder(context,
-                    DatabaseHandler.class, "database-name")
+                    DatabaseHandler.class, "Routes database")
                     .allowMainThreadQueries()
                     .fallbackToDestructiveMigration()
                     .build();
