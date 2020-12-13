@@ -76,9 +76,7 @@ public class LocationService extends Service implements SensorEventListener {
     List<String> gpsBearings = new ArrayList<String>();
     List<String> senBearings = new ArrayList<String>();
 
-    List<String> gpsBearings = new ArrayList<String>();
     List<Long> gpsTime = new ArrayList<>();
-    List<String> senBearings = new ArrayList<String>();
     List<Long> senTime = new ArrayList<>();
     List<Double> lats = new ArrayList<>();
     List<Double> lons = new ArrayList<>();
@@ -283,10 +281,21 @@ public class LocationService extends Service implements SensorEventListener {
                 FileWriter fw;
                 BufferedWriter bw;
 
-                String str = "gpsBearing, latitude, longitude, gpsTime, sensor, sensorTime\n";
+                String str = "gpsBearing, latitude, longitude, gpsTimeMillis, sensor, sensorTimeMillis, averageSpeedKmH\n";
+
+                double speed = 0;
 
                 for (int i = 0; i < gpsBearings.size() && i < senBearings.size(); i ++) {
-                    str += gpsBearings.get(i) + "," + lats.get(i) + "," + lons.get(i) + "," + gpsTime.get(i) + "," + senBearings.get(i) + "," + senTime.get(i) + "\n";
+                    if (i > 0) {
+                        if (speed == 0) {
+                            speed = Utils.calculateMetersPerMillisSecond(lats.get(i-1), lons.get(i-1), lats.get(i), lons.get(i), gpsTime.get(i-1), gpsTime.get(i));
+                        } else {
+                            speed = (speed + Utils.calculateMetersPerMillisSecond(lats.get(i-1), lons.get(i-1), lats.get(i), lons.get(i), gpsTime.get(i-1), gpsTime.get(i))) / 2;
+                        }
+
+                    }
+
+                    str += gpsBearings.get(i) + "," + lats.get(i) + "," + lons.get(i) + "," + gpsTime.get(i) + "," + senBearings.get(i) + "," + senTime.get(i) + "," + speed + "\n";
                 }
 
                 fullName = path + "semsGpsAndSensorDataV2" + System.currentTimeMillis() / 1000 + ".csv";
@@ -304,7 +313,6 @@ public class LocationService extends Service implements SensorEventListener {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-
     }
 
 
