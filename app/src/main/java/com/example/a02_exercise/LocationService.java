@@ -1,6 +1,7 @@
 package com.example.a02_exercise;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -36,6 +37,7 @@ import com.opencsv.CSVWriter;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -71,7 +73,8 @@ public class LocationService extends Service implements SensorEventListener {
 
     List<String[]> data = new ArrayList<String[]>();
 
-
+    List<String> gpsBearings = new ArrayList<String>();
+    List<String> senBearings = new ArrayList<String>();
 
     List<String> gpsBearings = new ArrayList<String>();
     List<Long> gpsTime = new ArrayList<>();
@@ -124,8 +127,9 @@ public class LocationService extends Service implements SensorEventListener {
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mMagnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        mSensorManager.registerListener((SensorEventListener) context, mMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
-        mSensorManager.registerListener((SensorEventListener) context, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(this, mMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
+        context = this;
 
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(
@@ -229,6 +233,7 @@ public class LocationService extends Service implements SensorEventListener {
                     orientation = orientation / counter;
                     orientation = Math.toDegrees(orientation);
                     orientation = (orientation + 360) % 360;
+                    System.out.println("Sen Bearing " + orientation + " at time " + System.currentTimeMillis());
                     senBearings.add(orientation + "");
                     System.out.println("sen bearing: " + orientation);
                     senTime.add(System.currentTimeMillis());
@@ -301,4 +306,6 @@ public class LocationService extends Service implements SensorEventListener {
         }
 
     }
+
+
 }
