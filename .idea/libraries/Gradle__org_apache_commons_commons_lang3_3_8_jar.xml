@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="Gradle: org.apache.commons:commons-lang3:3.8">
+  <library name="Gradle: org.apache.commons:commons-lang3:3.8@jar">
     <CLASSES>
       <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-lang3/3.8/222fc4cf714a63f27cbdafdbd863efd0d30c8a1e/commons-lang3-3.8.jar!/" />
     </CLASSES>

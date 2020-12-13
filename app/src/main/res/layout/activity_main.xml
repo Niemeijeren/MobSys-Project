@@ -19,5 +19,17 @@
         android:layout_height="wrap_content"
         android:text="@string/stop_location_updates"/>
 
+    <TextView
+        android:id="@+id/tv_magnetometer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Magnetometer: false" />
+
+    <TextView
+        android:id="@+id/tvaccellerometer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="accellerometer: false" />
+
 
 </LinearLayout>

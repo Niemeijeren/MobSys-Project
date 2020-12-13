@@ -15,9 +15,13 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.location.LocationRequest;
 
 import java.util.List;
 
@@ -29,6 +33,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     Sensor accelSensor;
     Intent intent;
 
+    AppCompatActivity context = this;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,15 +45,43 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         accelSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         sensorManager.registerListener(MainActivity.this, accelSensor, sensorManager.SENSOR_DELAY_NORMAL);
 
+        Handler handler = new Handler();
+
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (LocationService.mLastAccelerometerSet != false) {
+                    TextView tv = context.findViewById(R.id.tvaccellerometer);
+                    tv.setText("accelerometer: true");
+                }
+
+                if (LocationService.mLastMagnetometerSet != false) {
+                    TextView tv = context.findViewById(R.id.tv_magnetometer);
+                    tv.setText("magnetometer: true");
+                }
+            }
+        }, 20000 );
+
+        if (LocationService.mLastAccelerometerSet != false) {
+            TextView tv = this.findViewById(R.id.tvaccellerometer);
+            tv.setText("accelerometer: true");
+        }
+
+        if (LocationService.mLastMagnetometerSet != false) {
+            TextView tv = this.findViewById(R.id.tv_magnetometer);
+            tv.setText("magnetometer: true");
+        }
+
         findViewById(R.id.buttonStartLocation).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (ContextCompat.checkSelfPermission(
-                        getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED){
+                if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                        || ContextCompat.checkSelfPermission(getApplicationContext(),Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                        || ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+                {
                     ActivityCompat.requestPermissions(
                             MainActivity.this,
-                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
                             REQUEST_CODE_LOCATION_PERMISSION
                     );
                 } else {
@@ -54,14 +89,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 }
             }
         });
-
         findViewById(R.id.buttonStopLocation).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 stopLocationService();
             }
         });
-
     }
 
     @Override
@@ -78,7 +111,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        // Log.d(TAG, "onSensorChanged: X: " + event.values[0] + " Y: " + event.values[1] + " Z: " + event.values[2]);
+        if (LocationService.mLastAccelerometerSet != false) {
+            TextView tv = this.findViewById(R.id.tvaccellerometer);
+            tv.setText("accelerometer: true");
+        }
+
+        if (LocationService.mLastMagnetometerSet != false) {
+            TextView tv = this.findViewById(R.id.tv_magnetometer);
+            tv.setText("magnetometer: true");
+        }
     }
 
     @Override
@@ -109,7 +150,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             intent.setAction(Constants.ACTION_START_LOCATION_SERVICE);
             startService(intent);
             Toast.makeText(this, "location service started", Toast.LENGTH_SHORT).show();
-
         }
     }
 
