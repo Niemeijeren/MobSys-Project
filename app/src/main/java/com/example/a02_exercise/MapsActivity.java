@@ -64,27 +64,28 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             latlngs.add(new LatLng(locationPoint.getLatitude(), locationPoint.getLongitude()));
         }
 
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        for (LatLng latLng : latlngs) {
-            builder.include(latLng);
+        if (latlngs.size() > 1) {
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            for (LatLng latLng : latlngs) {
+                builder.include(latLng);
+            }
+
+            PolylineOptions rectOptions = new PolylineOptions().addAll(latlngs).color(Color.BLUE);
+            Polyline line = mMap.addPolyline(rectOptions);
+
+
+            LatLngBounds bounds = builder.build();
+            final CameraUpdate cameraUpdater = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+
+            mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+                @Override
+                public void onMapLoaded() {
+                    /**set animated zoom camera into map*/
+                    mMap.animateCamera(cameraUpdater);
+                }
+            });
         }
 
-        PolylineOptions rectOptions = new PolylineOptions().addAll(latlngs).color(Color.BLUE);
-        //mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(locations.get(locations.size()/2).getLatitude(), locations.get(locations.size()/2).getLongitude())));
-        //mMap.setMinZoomPreference(12);
-        Polyline line = mMap.addPolyline(rectOptions);
-
-
-        LatLngBounds bounds = builder.build();
-        final CameraUpdate cameraUpdater = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-
-        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
-            @Override
-            public void onMapLoaded() {
-                /**set animated zoom camera into map*/
-                mMap.animateCamera(cameraUpdater);
-            }
-        });
 
     }
 

@@ -118,7 +118,7 @@ public class MedianRoute {
             length += utils.calculateDistance(first, locationPoint);
             first = locationPoint;
         }
-        return length;
+        return length / 1000;
     }
 
     /**
@@ -133,7 +133,7 @@ public class MedianRoute {
 
         Long timestmapLast = medianPoints.get(medianPoints.size() - 1).getTimeStamp();
 
-        return timestmapLast - timestampFirst / 1000 / 60;
+        return (timestmapLast - timestampFirst) / 1000 / 60;
 
     }
 }

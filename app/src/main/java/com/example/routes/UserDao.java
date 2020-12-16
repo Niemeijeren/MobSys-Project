@@ -13,9 +13,6 @@ public interface UserDao {
     @Query("SELECT * FROM Route")
     List<Route> getAllRoutes();
 
-    //@Query("SELECT * FROM Route WHERE ID LIKE :first")
-    //Route findById(String first);
-
     @Insert
     public void insertRoute(Route route);
 

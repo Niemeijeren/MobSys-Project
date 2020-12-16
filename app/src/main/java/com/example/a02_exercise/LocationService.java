@@ -65,6 +65,8 @@ public class LocationService extends Service implements SensorEventListener {
 
     Context context;
 
+    private boolean stopSensors = false;
+
     float lastBearing = 0;
     double orientation = 0;
     int counter = 0;
@@ -114,6 +116,7 @@ public class LocationService extends Service implements SensorEventListener {
     }
 
     private void startLocationService() {
+        stopSensors = false;
         context = this;
         now = System.currentTimeMillis();
         db = DatabaseHandler.getInstance(this.getApplicationContext());
@@ -199,7 +202,7 @@ public class LocationService extends Service implements SensorEventListener {
         this.insertRouteToDb();
         LocationServices.getFusedLocationProviderClient(this)
                 .removeLocationUpdates(locationCallback);
-        mSensorManager.unregisterListener(this);
+        stopSensors = true;
         stopSelf();
     }
 
@@ -220,7 +223,7 @@ public class LocationService extends Service implements SensorEventListener {
         if (medianRoute.checkValidity()) {
             //100 points for kilometer
             //2 points per minute
-            int points = (int) medianRoute.getLengthOfRouteKm() * 100 + (int) medianRoute.getTimeOfRoute() * 2;
+            int points = (int) (medianRoute.getLengthOfRouteKm() * 100 + medianRoute.getTimeOfRoute() * 2);
             route.setPoints(points);
         } else {
             route.setPoints(0);
@@ -235,8 +238,8 @@ public class LocationService extends Service implements SensorEventListener {
             db.userDao().insertRoute(route);
         } else {
             //CPU heavy
-            //route.setLocationPoints(medianRoute.getMedianPoints());
-            route.setLocationPoints(Utils.reduceNumberOfPointsByProximity(medianRoute.getMedianPoints()));
+            route.setLocationPoints(medianRoute.getMedianPoints());
+            //route.setLocationPoints(Utils.reduceNumberOfPointsByProximity(medianRoute.getMedianPoints()));
             db.userDao().insertRoute(route);
         }
 
@@ -247,8 +250,6 @@ public class LocationService extends Service implements SensorEventListener {
         //Turn it into one point then do that until no points are within 5 meters of each each
         //But that would take O(n*n) time approximately.
         //And also consume alot more resources compared to just averaging points O(n)
-
-
     }
 
     @Override
@@ -266,9 +267,17 @@ public class LocationService extends Service implements SensorEventListener {
         return super.onStartCommand(intent, flags, startId);
     }
 
+    private void stopSensors() {
+        mSensorManager.unregisterListener(this, mAccelerometer);
+        mSensorManager.unregisterListener(this, mMagnetometer);
+    }
+
     @SuppressLint("DefaultLocale")
     @Override
     public void onSensorChanged(final SensorEvent event) {
+        if (stopSensors) {
+            stopSensors();
+        }
 
         if (counter < 10) {
 

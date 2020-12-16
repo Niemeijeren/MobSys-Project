@@ -48,14 +48,6 @@ public class Route {
 
     public List<LocationPoint> getLocationPoints() { return this.locationPoints; }
 
-    //public int ID() {
-    //    return ID;
-    //}
-
-    //public void setID(int id) {
-    //    this.ID = id;
-    //}
-
     public Long timeStart() {
         return timeStart;
     }

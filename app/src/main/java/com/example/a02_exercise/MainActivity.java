@@ -15,6 +15,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.TextureView;
@@ -75,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 stopLocationService();
+                showPopup(v);
             }
         });
 
@@ -157,19 +159,27 @@ public class MainActivity extends AppCompatActivity {
             findViewById(R.id.btnStop).setVisibility(View.INVISIBLE);
             findViewById(R.id.btnStart).setVisibility(View.VISIBLE);
         }
-        this.showPopup();
+
     }
 
-    public void showPopup() {
+    public final void showPopup(final View view) {
 
-        PopUpClass popUpClass = new PopUpClass();
+        Handler handler = new Handler();
 
-        if (db.userDao().getAllRoutes().size() > 0) {
-            Route lastRoute = db.userDao().getAllRoutes().get(db.userDao().getAllRoutes().size() - 1);
-            popUpClass.showPopupWindow(findViewById(R.id.btnStart), lastRoute);
-        }
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                PopUpClass popUpClass = new PopUpClass();
 
-        popUpClass.showPopupWindow(findViewById(R.id.btnStart), null);
+                if (db.userDao().getAllRoutes().size() > 0) {
+                    Route lastRoute = db.userDao().getAllRoutes().get(db.userDao().getAllRoutes().size() - 1);
+                    popUpClass.showPopupWindow(findViewById(R.id.btnStart), lastRoute);
+                }
+
+                popUpClass.showPopupWindow(findViewById(R.id.btnStart), null);
+            }
+        }, 50);
+
 
 
     }
